@@ -3128,7 +3128,7 @@ https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47485'''))
             return
         dep_scan_file = self.get_dep_scan_file_for(target)[1]
         element.add_item('dyndep', dep_scan_file)
-        element.add_dep(dep_scan_file)
+        element.add_orderdep(dep_scan_file)
 
     def get_dep_scan_file_for(self, target: build.BuildTarget) -> T.Tuple[str, str]:
         priv = self.get_target_private_dir(target)
