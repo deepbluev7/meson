@@ -57,6 +57,7 @@ if T.TYPE_CHECKING:
 
 CPP_IMPORT_RE = re.compile(r'\w*import ([a-zA-Z0-9]+);')
 CPP_EXPORT_RE = re.compile(r'\w*export module ([a-zA-Z0-9]+);')
+CPP_IMPLICIT_IMPORT_RE = re.compile(r'\w*(?<!export )module ([a-zA-Z0-9]+);')
 
 FORTRAN_INCLUDE_PAT = r"^\s*include\s*['\"](\w+\.\w+)['\"]"
 FORTRAN_MODULE_PAT = r"^\s*\bmodule\b\s+(\w+)\s*(?:!+.*)*$"
@@ -134,6 +135,7 @@ class DependencyScanner:
         for line in fpath.read_text(encoding='utf-8', errors='ignore').split('\n'):
             import_match = CPP_IMPORT_RE.match(line)
             export_match = CPP_EXPORT_RE.match(line)
+            implicit_import_match = CPP_IMPLICIT_IMPORT_RE.match(line)
             if import_match:
                 needed = import_match.group(1)
                 self.imports[fname].append(needed)
@@ -144,6 +146,9 @@ class DependencyScanner:
                 self.sources_with_exports.append(fname)
                 self.provided_by[exported_module] = fname
                 self.exports[fname] = exported_module
+            if implicit_import_match:
+                needed = implicit_import_match.group(1)
+                self.imports[fname].append(needed)
 
     def module_name_for(self, src: str, lang: Literal['cpp', 'fortran']) -> str:
         if lang == 'fortran':
