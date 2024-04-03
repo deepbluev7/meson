@@ -582,6 +582,12 @@ class GnuCompiler(GnuLikeCompiler):
     def get_optimization_args(self, optimization_level: str) -> T.List[str]:
         return gnu_optimization_args[optimization_level]
 
+    def get_module_outdir_args(self, path: str) -> T.List[str]:
+        if mesonlib.version_compare(self.version, '>=14.0.0'):
+            return [f'-fmodule-mapper=|@g++-mapper-server -r{path}/gcm.cache', '-fdeps-format=p1689r5']
+        else:
+            return [f'-fmodule-mapper=|@g++-mapper-server -r{path}/gcm.cache']
+
     def get_pch_suffix(self) -> str:
         return 'gch'
 

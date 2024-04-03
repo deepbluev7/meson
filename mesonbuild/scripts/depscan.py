@@ -161,6 +161,9 @@ class DependencyScanner:
             else:
                 extension = 'mod'
             return os.path.join(self.target_data.private_dir, f'{namebase}.{extension}')
+
+        if self.target_data.compilers[lang] == 'gcc':
+            return os.path.join(self.target_data.private_dir, 'gcm.cache', f'{self.exports[src]}.gcm')
         return '{}.ifc'.format(self.exports[src])
 
     def scan(self) -> int:

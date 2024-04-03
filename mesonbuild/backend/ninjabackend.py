@@ -151,6 +151,7 @@ class TargetDependencyScannerInfo:
     private_dir: str
     source2object: T.Dict[str, str]
     sources: T.List[T.Tuple[str, Literal['cpp', 'fortran']]]
+    compilers: T.Dict[str, str]
 
 
 @unique
@@ -1115,7 +1116,7 @@ class NinjaBackend(backends.Backend):
         scan_sources = list(self.select_sources_to_scan(compiled_sources))
 
         scaninfo = TargetDependencyScannerInfo(
-            self.get_target_private_dir(target), source2object, scan_sources)
+            self.get_target_private_dir(target), source2object, scan_sources, {lang: compiler.id for (lang, compiler) in target.compilers.items()})
 
         write = True
         if os.path.exists(pickle_abs):
@@ -3063,6 +3064,9 @@ https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47485'''))
                                                     rel_obj)
                         self.add_build(depelem)
             commands += compiler.get_module_outdir_args(self.get_target_private_dir(target))
+        if compiler.get_language() == 'cpp':
+            commands += compiler.get_module_outdir_args(self.get_target_private_dir(target))
+
         if extra_args is not None:
             commands.extend(extra_args)
 
