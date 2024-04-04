@@ -55,9 +55,9 @@ if T.TYPE_CHECKING:
         rules: T.List[Rule]
 
 
-CPP_IMPORT_RE = re.compile(r'\w*import ([a-zA-Z0-9]+);')
-CPP_EXPORT_RE = re.compile(r'\w*export module ([a-zA-Z0-9]+);')
-CPP_IMPLICIT_IMPORT_RE = re.compile(r'\w*(?<!export )module ([a-zA-Z0-9]+);')
+CPP_IMPORT_RE = re.compile(r'\w*import ([a-zA-Z0-9:.]+);')
+CPP_EXPORT_RE = re.compile(r'\w*export module ([a-zA-Z0-9:.]+);')
+CPP_IMPLICIT_IMPORT_RE = re.compile(r'\w*(?<!export )module ([a-zA-Z0-9:.]+);')
 
 FORTRAN_INCLUDE_PAT = r"^\s*include\s*['\"](\w+\.\w+)['\"]"
 FORTRAN_MODULE_PAT = r"^\s*\bmodule\b\s+(\w+)\s*(?:!+.*)*$"
@@ -132,23 +132,48 @@ class DependencyScanner:
 
     def scan_cpp_file(self, fname: str) -> None:
         fpath = pathlib.Path(fname)
+        module_name = None
         for line in fpath.read_text(encoding='utf-8', errors='ignore').split('\n'):
             import_match = CPP_IMPORT_RE.match(line)
             export_match = CPP_EXPORT_RE.match(line)
             implicit_import_match = CPP_IMPLICIT_IMPORT_RE.match(line)
             if import_match:
                 needed = import_match.group(1)
+
+                # Import of partitions implicitly include the module name
+                if needed.startswith(':'):
+                    if not module_name:
+                        raise RuntimeError(f'Module statement missing before partition import {needed}.')
+                    needed = module_name+needed;
+
                 self.imports[fname].append(needed)
+
             if export_match:
                 exported_module = export_match.group(1)
                 if exported_module in self.provided_by:
                     raise RuntimeError(f'Multiple files provide module {exported_module}.')
+
+                module_name = exported_module
+
                 self.sources_with_exports.append(fname)
                 self.provided_by[exported_module] = fname
                 self.exports[fname] = exported_module
+
             if implicit_import_match:
                 needed = implicit_import_match.group(1)
-                self.imports[fname].append(needed)
+
+                # Module partitions are implicitly "provided", since they can be imported by other partitions
+                if ':' in needed:
+                    module_name = needed.split(':')[0]
+                    if needed in self.provided_by:
+                        raise RuntimeError(f'Multiple files provide module {needed}.')
+                    self.sources_with_exports.append(fname)
+                    self.provided_by[needed] = fname
+                    self.exports[fname] = needed
+                # Otherwise the module is just implicitly imported into all implementation units
+                else:
+                    module_name = needed
+                    self.imports[fname].append(needed)
 
     def module_name_for(self, src: str, lang: Literal['cpp', 'fortran']) -> str:
         if lang == 'fortran':
@@ -163,7 +188,7 @@ class DependencyScanner:
             return os.path.join(self.target_data.private_dir, f'{namebase}.{extension}')
 
         if self.target_data.compilers[lang] == 'gcc':
-            return os.path.join(self.target_data.private_dir, 'gcm.cache', f'{self.exports[src]}.gcm')
+            return os.path.join(self.target_data.private_dir, 'gcm.cache', f'{self.exports[src].replace(":", "-")}.gcm')
         return '{}.ifc'.format(self.exports[src])
 
     def scan(self) -> int:
