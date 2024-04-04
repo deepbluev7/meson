@@ -55,7 +55,7 @@ if T.TYPE_CHECKING:
         rules: T.List[Rule]
 
 
-CPP_IMPORT_RE = re.compile(r'\w*import ([a-zA-Z0-9:.]+);')
+CPP_IMPORT_RE = re.compile(r'\w*(?:export )?import ([a-zA-Z0-9:.]+);')
 CPP_EXPORT_RE = re.compile(r'\w*export module ([a-zA-Z0-9:.]+);')
 CPP_IMPLICIT_IMPORT_RE = re.compile(r'\w*(?<!export )module ([a-zA-Z0-9:.]+);')
 
