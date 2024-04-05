@@ -55,9 +55,10 @@ if T.TYPE_CHECKING:
         rules: T.List[Rule]
 
 
-CPP_IMPORT_RE = re.compile(r'\w*(?:export )?import ([a-zA-Z0-9:.]+);')
-CPP_EXPORT_RE = re.compile(r'\w*export module ([a-zA-Z0-9:.]+);')
-CPP_IMPLICIT_IMPORT_RE = re.compile(r'\w*(?<!export )module ([a-zA-Z0-9:.]+);')
+CPP_IMPORT_RE = re.compile(r'.*\b(?:export\s)?\s*import\s+([a-zA-Z0-9:.]+)\s*;.*')
+CPP_EXPORT_RE = re.compile(r'.*\bexport\s+module\s+([a-zA-Z0-9:.]+)\s*;.*')
+# because we match export module first, we don't need to have negative assertion here
+CPP_IMPLICIT_IMPORT_RE = re.compile(r'.*\bmodule\s+([a-zA-Z0-9:.]+)\s*;.*')
 
 FORTRAN_INCLUDE_PAT = r"^\s*include\s*['\"](\w+\.\w+)['\"]"
 FORTRAN_MODULE_PAT = r"^\s*\bmodule\b\s+(\w+)\s*(?:!+.*)*$"
@@ -148,7 +149,7 @@ class DependencyScanner:
 
                 self.imports[fname].append(needed)
 
-            if export_match:
+            elif export_match:
                 exported_module = export_match.group(1)
                 if exported_module in self.provided_by:
                     raise RuntimeError(f'Multiple files provide module {exported_module}.')
@@ -159,7 +160,7 @@ class DependencyScanner:
                 self.provided_by[exported_module] = fname
                 self.exports[fname] = exported_module
 
-            if implicit_import_match:
+            elif implicit_import_match:
                 needed = implicit_import_match.group(1)
 
                 # Module partitions are implicitly "provided", since they can be imported by other partitions
