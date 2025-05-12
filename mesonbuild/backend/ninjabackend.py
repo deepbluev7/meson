@@ -1099,6 +1099,9 @@ class NinjaBackend(backends.Backend):
             return False
         if 'fortran' in target.compilers:
             return True
+        return self.cpp_modules_supported(target)
+
+    def cpp_modules_supported(self, target: 'build.BuildTarget') -> bool:
         if 'cpp' not in target.compilers:
             return False
         if '-fmodules-ts' in target.extra_args['cpp']:
@@ -3160,7 +3163,7 @@ https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47485'''))
                                                     rel_obj)
                         self.add_build(depelem)
             commands += compiler.get_module_outdir_args(self.get_target_private_dir(target))
-        if compiler.get_language() == 'cpp':
+        if compiler.get_language() == 'cpp' and self.cpp_modules_supported(target):
             commands += compiler.get_module_outdir_args(self.get_target_private_dir(target))
 
         if extra_args is not None:

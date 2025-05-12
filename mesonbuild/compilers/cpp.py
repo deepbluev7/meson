@@ -551,6 +551,14 @@ class GnuCPPCompiler(_StdCPPLibMixin, GnuCPPStds, GnuCompiler, CPPCompiler):
     def get_pch_use_args(self, pch_dir: str, header: str) -> T.List[str]:
         return ['-fpch-preprocess', '-include', os.path.basename(header)]
 
+    def get_module_outdir_args(self, path: str) -> T.List[str]:
+        if version_compare(self.version, '>=14.0.0'):
+            return [f'-fmodule-mapper=|@g++-mapper-server -r{path}', '-fdeps-format=p1689r5']
+        elif version_compare(self.version, '>=11.0.0'):
+            return [f'-fmodule-mapper=|@g++-mapper-server -r{path}']
+        else:
+            return []
+
 
 class PGICPPCompiler(PGICompiler, CPPCompiler):
     def __init__(self, ccache: T.List[str], exelist: T.List[str], version: str, for_machine: MachineChoice, is_cross: bool,
@@ -930,6 +938,9 @@ class VisualStudioCPPCompiler(CPP11AsCPP14Mixin, VisualStudioLikeCPPCompilerMixi
                 return args
             del args[i]
         return args
+
+    def get_module_outdir_args(self, path: str) -> T.List[str]:
+        return ['/ifcOutput', path]
 
 class ClangClCPPCompiler(CPP11AsCPP14Mixin, VisualStudioLikeCPPCompilerMixin, ClangClCompiler, CPPCompiler):
 

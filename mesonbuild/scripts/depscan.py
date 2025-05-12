@@ -189,8 +189,8 @@ class DependencyScanner:
             return os.path.join(self.target_data.private_dir, f'{namebase}.{extension}')
 
         if self.target_data.compilers[lang] == 'gcc':
-            return os.path.join(self.target_data.private_dir, 'gcm.cache', f'{self.exports[src].replace(":", "-")}.gcm')
-        return '{}.ifc'.format(self.exports[src])
+            return os.path.join(self.target_data.private_dir, f'{self.exports[src].replace(":", "-")}.gcm')
+        return os.path.join(self.target_data.private_dir, f'{self.exports[src].replace(":", "-")}.ifc')
 
     def scan(self) -> int:
         for s, lang in self.sources:
