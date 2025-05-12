@@ -13,6 +13,13 @@ e = executable('modtest',
     'src7.cxx',
     'src8.cxx',
     'src9.cxx',
+    # The following files actually expose module matchedname
+    # primary module interface unit
+    'mismatchedname.cxx',
+    # partition module interface unit
+    'mismatchednamea.cxx',
+    # partition module implementation unit
+    'mismatchednameb.cxx',
     cpp_args: ['-fmodules-ts'],
     )
 
