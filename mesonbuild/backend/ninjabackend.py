@@ -1104,8 +1104,13 @@ class NinjaBackend(backends.Backend):
     def cpp_modules_supported(self, target: 'build.BuildTarget') -> bool:
         if 'cpp' not in target.compilers:
             return False
+
+        # -fmodules-ts is renamed to -fmodules now and required by gcc to enable modules support
         if '-fmodules-ts' in target.extra_args['cpp']:
             return True
+        if '-fmodules' in target.extra_args['cpp']:
+            return True
+
         # Currently only the preview version of Visual Studio is supported.
         cpp = target.compilers['cpp']
         if cpp.get_id() != 'msvc':
