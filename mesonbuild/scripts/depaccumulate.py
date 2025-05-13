@@ -68,7 +68,7 @@ def get_provider(rules: T.List[Rule], name: str) -> T.Optional[str]:
 
 def process_rules(rules: T.List[Rule],
                   extra_rules: T.List[Rule],
-                  ) -> T.Iterable[T.Tuple[str, T.Optional[T.List[str]], T.List[str]]]:
+                  ) -> T.Iterable[T.Tuple[str, T.Optional[T.List[str]], T.Iterable[str]]]:
     """Process the rules for this Target
 
     :param rules: the rules for this target
@@ -77,24 +77,24 @@ def process_rules(rules: T.List[Rule],
     """
     for rule in rules:
         prov: T.Optional[T.List[str]] = None
-        req: T.List[str] = []
+        req: T.Set[str] = set()
         if 'provides' in rule:
             prov = [p['compiled-module-path'] for p in rule['provides']]
         if 'requires' in rule:
             for p in rule['requires']:
                 modfile = p.get('compiled-module-path')
                 if modfile is not None:
-                    req.append(modfile)
+                    req.add(modfile)
                 else:
                     # We can't error if this is not found because of compiler
                     # provided modules
                     found = get_provider(extra_rules, p['logical-name'])
                     if found:
-                        req.append(found)
+                        req.add(found)
         yield rule['primary-output'], prov, req
 
 
-def formatter(files: T.Optional[T.List[str]]) -> str:
+def formatter(files: T.Optional[T.Iterable[str]]) -> str:
     if files:
         fmt = ' '.join(quote(f) for f in files)
         return f'| {fmt}'
