@@ -134,6 +134,8 @@ class DependencyScanner:
     def scan_cpp_file(self, fname: str) -> None:
         fpath = pathlib.Path(fname)
         module_name = None
+
+        # This currently does not handle comments.
         for line in fpath.read_text(encoding='utf-8', errors='ignore').split('\n'):
             import_match = CPP_IMPORT_RE.match(line)
             export_match = CPP_EXPORT_RE.match(line)
